@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LZXBI 人格测试</title>
+
+<style>
+body {
+    margin: 0;
+    background: #f3f5f4;
+    font-family: -apple-system, BlinkMacSystemFont;
+}
+
+.progress-bar { height:6px; background:#eee; }
+.progress { height:100%; background:#2e7d32; width:0%; transition:0.3s;}
+
+.container { padding:15px; }
+
+.card {
+    background:white;
+    border-radius:16px;
+    padding:18px;
+    margin-top:10px;
+    animation:fadeIn 0.4s;
+}
+
+.card p { font-size:16px; line-height:1.5; }
+
+.option {
+    width:100%;
+    padding:16px;
+    margin-top:12px;
+    border-radius:12px;
+    border:1px solid #ddd;
+    font-size:16px;
+}
+
+.option:active {
+    background:#d7f0e2;
+    transform:scale(0.97);
+}
+
+.result-card {
+    background:linear-gradient(135deg,#1f1f1f,#2e7d32);
+    color:white;
+    border-radius:20px;
+    padding:20px;
+    text-align:center;
+}
+
+.result-card img {
+    width:100%;
+    border-radius:12px;
+    margin-bottom:12px;
+}
+
+.result-type { font-size:30px; font-weight:bold; }
+.result-sub { opacity:0.85; margin-top:5px; }
+.result-desc { margin-top:12px; font-size:14px; }
+
+button {
+    width:100%;
+    padding:14px;
+    margin-top:10px;
+    border:none;
+    border-radius:12px;
+    background:#2e7d32;
+    color:white;
+    font-size:16px;
+}
+
+@keyframes fadeIn {
+    from {opacity:0;transform:translateY(10px);}
+    to {opacity:1;transform:translateY(0);}
+}
+</style>
+</head>
+
+<body>
+
+<div class="progress-bar"><div class="progress" id="progress"></div></div>
+<div class="container" id="app"></div>
+
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<script>
+let scores = {L:0,X:0,Z:0,B:0};
+let index = 0;
+
+/* ✅ 原题目完全保留 */
+const questions = [
+{q:"刷朋友圈时，突然看到 lzx 发了一张自拍，你的第一反应是？",
+A:["L","秒赞+嫡长评：“这集真妈妈”"],
+B:["X","默默保存图片，但绝不点赞"],
+C:["Z","放大找瑕疵，然后冷笑一声"],
+D:["B","直接划走，跟我有啥关系"]},
+
+{q:"lzx 半夜给你发消息：“在吗？聊聊？” 你会？",
+A:["L","心跳加速，立刻回复：“在！聊到天亮都行！”"],
+B:["X","等两分钟再回，假装淡定：“嗯，说。”"],
+C:["Z","内心狂喜但只回一个：“？”"],
+D:["B","装死，第二天说：“啊昨晚睡了”"]},
+
+{q:"假如 lzx 送你一个礼物，你希望是？",
+A:["L","手写的一封长信"],
+B:["X","第五人格虚妄"],
+C:["Z","一张写有“欠你一顿饭”的纸条"],
+D:["B","一个能离lzx远点的机票"]},
+
+{q:"有人说 lzx 坏话，你当场听到会？",
+A:["L","直接开怼：“你再说一遍试试？”"],
+B:["X","心里记仇但表面微笑：“每个人看法不同嘛”"],
+C:["Z","偷偷录音，发给lzx邀功"],
+D:["B","加入讨论：“其实我也觉得有点……”"]},
+
+{q:"你梦到和 lzx 一起被困在电梯里，醒来后你会？",
+A:["L","立刻记下梦境细节"],
+B:["X","回味一下，然后正常起床"],
+C:["Z","查周公解梦：“梦见lzx意味着什么？”"],
+D:["B","庆幸只是梦，太尴尬了"]},
+
+{q:"lzx 在群里发了一个冷笑话，没人回应。你会？",
+A:["L","连发十个“哈哈哈”并复制笑话"],
+B:["X","私聊lzx：“笑死了”"],
+C:["Z","666"],
+D:["B","🤡"]},
+
+{q:"假如你有一个超能力，对 lzx 你会用？",
+A:["L","读心术——想知道lzx怎么看我"],
+B:["X","隐身术——偷偷跟着lzx一整天"],
+C:["Z","时间暂停——把lzx朋友圈全点赞一遍"],
+D:["B","传送术——把lzx送到火星"]},
+
+{q:"lzx 突然关注了你所有社交账号，你会？",
+A:["L","激动得发一条：“我圆满了”"],
+B:["X","立刻把以前发疯的内容设为私密"],
+C:["Z","反向关注lzx的小号"],
+D:["B","注销账号跑路"]},
+
+{q:"用三个字形容你对 lzx 的态度？",
+A:["L","爱死楼自习"],
+B:["X","随便吧"],
+C:["Z","烦死了"],
+D:["B","谁啊你"]},
+
+{q:"最后一道送分题：你觉得自己对 lzx 的真实感情是？",
+A:["L","痴迷上头，lzx是我生命的光"],
+B:["X","有点喜欢，但死要面子"],
+C:["Z","又爱又恨，主打一个别扭"],
+D:["B","毫无波澜，甚至想笑"]},
+
+{q:"如果lzx突然说“你可以当我一天宠物”，你会？",
+A:["L","当场学狗叫：“汪汪，主人！”"],
+B:["X","问他：“能当猫吗？狗太累。”"],
+C:["Z","说：“我当你爹行不行？”"],
+D:["B","回：“lzx是谁？你是不是认错人了？”"]},
+
+{q:"lzx发了条语音，你点开发现是30秒的沉默，你会？",
+A:["L","认真听完，然后回：“呼吸声真好听。”"],
+B:["X","回：“你睡着了？我也爱你。”"],
+C:["Z","回：“你再发这种我报警了。”"],
+D:["B","直接删掉聊天框"]},
+
+{q:"lzx不小心把水洒你身上了，你会？",
+A:["L","说：“没关系，这是爱的甘露。”"],
+B:["X","说：“你完了，请我喝一个月奶茶。”"],
+C:["Z","把自己的水也泼回去：“公平了。”"],
+D:["B","默默擦干，换件衣服，当没发生过"]}
+];
+
+function render(){
+    let q = questions[index];
+    let percent = (index / questions.length) * 100;
+    document.getElementById("progress").style.width = percent + "%";
+
+    document.getElementById("app").innerHTML = `
+    <div class="card">
+        <p>第 ${index+1} / ${questions.length} 题</p >
+        <p>${q.q}</p >
+
+        <div class="option" onclick="choose('${q.A[0]}')">A. ${q.A[1]}</div>
+        <div class="option" onclick="choose('${q.B[0]}')">B. ${q.B[1]}</div>
+        <div class="option" onclick="choose('${q.C[0]}')">C. ${q.C[1]}</div>
+        <div class="option" onclick="choose('${q.D[0]}')">D. ${q.D[1]}</div>
+    </div>`;
+}
+
+function choose(type){
+    scores[type]++;
+    index++;
+    if(index < questions.length){
+        render();
+    } else {
+        showResult();
+    }
+}
+
+function showResult(){
+    let result = Object.keys(scores).reduce((a,b)=>scores[a]>scores[b]?a:b);
+
+    let data = {
+        L:{title:"狂热亲卫队",desc:"重度上头",img:"https://via.placeholder.com/400x250?text=L型"},
+        X:{title:"嘴硬王者",desc:"口嫌体正直",img:"https://via.placeholder.com/400x250?text=X型"},
+        Z:{title:"阴阳乐子人",desc:"反向喜欢",img:"https://via.placeholder.com/400x250?text=Z型"},
+        B:{title:"佛系路人",desc:"纯吃瓜",img:"https://via.placeholder.com/400x250?text=B型"}
+    };
+
+    let total = scores.L + scores.X + scores.Z + scores.B;
+    let percent = Math.floor((scores[result]/total)*100);
+
+    document.getElementById("app").innerHTML = `
+    <div class="result-card" id="resultCard">
+
+        < img src="${data[result].img}">
+
+        <div class="result-type">${result}</div>
+        <div class="result-sub">${data[result].title}</div>
+        <div class="result-desc">${data[result].desc}</div>
+
+        <div style="margin-top:15px;">浓度：<span id="num">0</span>%</div>
+
+        <button onclick="downloadImage()">生成分享图</button>
+        <button onclick="location.reload()">再测一次</button>
+
+    </div>`;
+
+    animateNumber(percent);
+}
+
+function animateNumber(target){
+    let num = 0;
+    let t = setInterval(()=>{
+        num++;
+        let el = document.getElementById("num");
+        if(el) el.innerText = num;
+        if(num>=target) clearInterval(t);
+    },15);
+}
+
+function downloadImage(){
+    if(typeof html2canvas === "undefined"){
+        alert("截图功能加载失败");
+        return;
+    }
+
+    html2canvas(document.getElementById("resultCard")).then(canvas=>{
+        let link = document.createElement("a");
+        link.download = "LZX测试结果.png";
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+}
+
+render();
+</script>
+
+</body>
+</html>
